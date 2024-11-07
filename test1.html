@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>メニュー選択</title>
+</head>
+<body>
+    <h2>メニュー選択</h2>
+    
+    <!-- チェックボックスとラベル -->
+    <label>
+        <input type="checkbox" name="menu" value="1000" data-name="ハンバーグ">
+        ハンバーグ (¥1000)
+    </label><br>
+    
+    <label>
+        <input type="checkbox" name="menu" value="1500" data-name="ステーキ">
+        ステーキ (¥1500)
+    </label><br>
+
+    <label>
+        <input type="checkbox" name="menu" value="800" data-name="チャーハン">
+        チャーハン (¥800)
+    </label><br>
+
+    <!-- ボタンで選択された値を確認 -->
+    <button onclick="calculateTotal()">合計金額を表示</button>
+    
+    <!-- 選択結果を表示するエリア -->
+    <div id="result"></div>
+
+    <script>
+        function calculateTotal() {
+            const checkboxes = document.querySelectorAll('input[name="menu"]');
+            let selectedItems = [];
+            let totalPrice = 0;
+
+            checkboxes.forEach((checkbox) => {
+                if (checkbox.checked) {
+                    selectedItems.push(checkbox.getAttribute("data-name"));
+                    totalPrice += parseInt(checkbox.value, 10);
+                }
+            });
+
+            const result = document.getElementById('result');
+            if (selectedItems.length > 0) {
+                result.innerHTML = `選択されたメニュー: ${selectedItems.join(", ")}<br>合計金額: ¥${totalPrice}`;
+            } else {
+                result.innerText = "何も選択されていません";
+            }
+        }
+    </script>
+
+    <a href="https://paypay.ne.jp/help/account/account-create/">お支払いはこちらから</a>
+</body>
+</html>
