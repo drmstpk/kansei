@@ -3,50 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>選択したメニューの確認</title>
+    <title>注文履歴</title>
+    <!-- Firebase SDKを読み込み -->
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database.js"></script>
 </head>
 <body>
-    <h2>選択したメニューの確認</h2>
-    
-    <!-- パスワード入力フォーム -->
-    <label for="password">パスワードを入力してください:</label>
-    <input type="password" id="password">
-    <button onclick="verifyPassword()">確認</button>
-    
-    <!-- 選択結果を表示するエリア -->
-    <div id="result" style="display: none;"></div>
+    <h2>注文履歴</h2>
+    <!-- 履歴を表示するエリア -->
+    <div id="orderHistory"></div>
 
     <script>
-        // 正しいパスワードを設定
-        const correctPassword = "1234";  // 好きなパスワードを設定
+        // Firebaseの設定情報（注文ページと同じものを使用）
+        const firebaseConfig = {
+            apiKey: "API_KEY",
+            authDomain: "PROJECT_ID.firebaseapp.com",
+            databaseURL: "https://PROJECT_ID.firebaseio.com",
+            projectId: "PROJECT_ID",
+            storageBucket: "PROJECT_ID.appspot.com",
+            messagingSenderId: "SENDER_ID",
+            appId: "APP_ID",
+            measurementId: "G-MEASUREMENT_ID"
+        };
 
-        function verifyPassword() {
-            const enteredPassword = document.getElementById('password').value;
-            
-            if (enteredPassword === correctPassword) {
-                showOrderHistory();
-            } else {
-                alert("パスワードが間違っています。");
-            }
-        }
+        // Firebase初期化
+        const app = firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
 
-        function showOrderHistory() {
-            // localStorageから注文履歴を取得
-            const orderHistory = JSON.parse(localStorage.getItem('orderHistory'));
-            const result = document.getElementById('result');
-            
-            if (orderHistory && orderHistory.length > 0) {
-                result.style.display = "block";
-                result.innerHTML = "<h3>注文履歴:</h3>";
-                
-                orderHistory.forEach((order, index) => {
-                    result.innerHTML += `<p><strong>注文 ${index + 1} (${order.date})</strong><br>メニュー: <br>${order.items.join("<br>")}<br>合計金額: ¥${order.total}</p><hr>`;
-                });
-            } else {
-                result.innerText = "注文履歴がありません";
-            }
-        }
+        // データベースから注文履歴を取得して表示
+        const orderHistoryDiv = document.getElementById('orderHistory');
+        
+        database.ref('orders').on('value', (snapshot) => {
+            orderHistoryDiv.innerHTML = "<h3>注文履歴:</h3>";
+            snapshot.forEach((childSnapshot) => {
+                const order = childSnapshot.val();
+                orderHistoryDiv.innerHTML += `<p><strong>日時:</strong> ${order.date}<br>
+                    <strong>メニュー:</strong> ${order.items.join(", ")}<br>
+                    <strong>合計金額:</strong> ¥${order.total}</p><hr>`;
+            });
+        });
     </script>
 </body>
-<a href="test1.html">もう一度注文</a>
 </html>
