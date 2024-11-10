@@ -65,10 +65,12 @@
                     date: new Date().toLocaleString()
                 };
 
-                // Firebaseに注文データを保存し、エラーハンドリングを追加
+                // Firebaseに注文データを保存し、保存が成功したら次のページに移動
                 database.ref('orders').push(orderData)
                     .then(() => {
                         alert("注文が確定しました！");
+                        // データ保存後に `test3.html` に移動
+                        window.location.href = 'https://drmstpk.github.io/test1/index.html';
                     })
                     .catch((error) => {
                         console.error("注文の保存中にエラーが発生しました: ", error);
