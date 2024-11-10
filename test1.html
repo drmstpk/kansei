@@ -4,47 +4,40 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>メニュー選択</title>
-    <!-- Firebase SDKを読み込み -->
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database.js"></script>
+    <script type="module">
+        // Firebaseの最新モジュールをインポート
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+        import { getDatabase, ref, push } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+    </script>
 </head>
 <body>
     <h2>メニュー選択</h2>
-    <!-- チェックボックスとラベル -->
     <label>
-        <input type="checkbox" name="menu" value="1000" data-name="ハンバーグ">
-        ハンバーグ (¥1000)
+        <input type="checkbox" name="menu" value="1000" data-name="ハンバーグ"> ハンバーグ (¥1000)
     </label><br>
-    
     <label>
-        <input type="checkbox" name="menu" value="1500" data-name="ステーキ">
-        ステーキ (¥1500)
+        <input type="checkbox" name="menu" value="1500" data-name="ステーキ"> ステーキ (¥1500)
     </label><br>
-
     <label>
-        <input type="checkbox" name="menu" value="800" data-name="チャーハン">
-        チャーハン (¥800)
+        <input type="checkbox" name="menu" value="800" data-name="チャーハン"> チャーハン (¥800)
     </label><br>
-
-    <!-- 選択内容を保存 -->
     <button onclick="saveSelection()">注文を確定</button>
 
-    <script>
+    <script type="module">
         // Firebaseの設定情報
         const firebaseConfig = {
-            apiKey: "API_KEY",
+            apiKey: "AIzaSyBhC42q3yJq8kIXTKkl67nSiVX_Wn8_NK8",
             authDomain: "test1-dcefa.firebaseapp.com",
-            databaseURL: "https://test1-dcefa-default-rtdb.firebaseio.com",
             projectId: "test1-dcefa",
-            storageBucket: "test1-dcefa.appspot.com",
-            messagingSenderId: "SENDER_ID",
-            appId: "APP_ID",
-            measurementId: "G-MEASUREMENT_ID"
+            storageBucket: "test1-dcefa.firebasestorage.app",
+            messagingSenderId: "751353137597",
+            appId: "1:751353137597:web:16be05a30d56a3b19baad4",
+            measurementId: "G-H85YJ00FY2"
         };
 
-        // Firebase初期化
-        const app = firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
+        // Firebaseの初期化
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
 
         function saveSelection() {
             const checkboxes = document.querySelectorAll('input[name="menu"]');
@@ -65,12 +58,10 @@
                     date: new Date().toLocaleString()
                 };
 
-                // Firebaseに注文データを保存し、保存が成功したら次のページに移動
-                database.ref('orders').push(orderData)
+                // Firebase Realtime Databaseに注文を保存
+                push(ref(database, 'orders'), orderData)
                     .then(() => {
                         alert("注文が確定しました！");
-                        // データ保存後に `test3.html` に移動
-                        window.location.href = 'https://drmstpk.github.io/test1/index.html';
                     })
                     .catch((error) => {
                         console.error("注文の保存中にエラーが発生しました: ", error);
