@@ -90,28 +90,23 @@
         }
     </style>
     <script type="module">
-        // Import the functions you need from the SDKs you need
-    import { initializeApp } from "firebase/app";
-    import { getAnalytics } from "firebase/analytics";
-    // TODO: Add SDKs for Firebase products that you want to use
-    // https://firebase.google.com/docs/web/setup#available-libraries
-    
-    // Your web app's Firebase configuration
-    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-    const firebaseConfig = {
-      apiKey: "AIzaSyBhC42q3yJq8kIXTKkl67nSiVX_Wn8_NK8",
-      authDomain: "test1-dcefa.firebaseapp.com",
-      databaseURL: "https://test1-dcefa-default-rtdb.firebaseio.com/",
-      projectId: "test1-dcefa",
-      storageBucket: "test1-dcefa.firebasestorage.app",
-      messagingSenderId: "751353137597",
-      appId: "1:751353137597:web:16be05a30d56a3b19baad4",
-      measurementId: "G-H85YJ00FY2"
-    };
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+        import { getDatabase, ref, push, set, get } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+        const firebaseConfig = {
+            apiKey: "AIzaSyBi4R5J3DfW8xBXbM9cjSmQ_Ycwlzr76W4",
+            authDomain: "test2-802ce.firebaseapp.com",
+            databaseURL: "https://test2-802ce-default-rtdb.firebaseio.com",
+            projectId: "test2-802ce",
+            storageBucket: "test2-802ce.appspot.com",
+            messagingSenderId: "624514936023",
+            appId: "1:624514936023:web:cbbd8f7a89450b86e8d492",
+            measurementId: "G-5H39DWSK3Y"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
         document.addEventListener('DOMContentLoaded', function () {
             const foodContainer = document.getElementById('foodContainer');
             const drinkContainer = document.getElementById('drinkContainer');
@@ -252,7 +247,7 @@ const analytics = getAnalytics(app);
                 });
 
                 const quantityDisplay = document.createElement('span');
-                quantityDisplay.textContent = selectedItems[id]?.count || '0';
+                quantityDisplay.textContent = '0';
 
                 const plusButton = document.createElement('button');
                 plusButton.textContent = '+';
@@ -260,7 +255,7 @@ const analytics = getAnalytics(app);
                     if (!selectedItems[id]) {
                         selectedItems[id] = { name, price, count: 0 };
                     }
-                    selectedItems[id].count += 1;
+                    selectedItems[id].count++;
                     updateSelectedItems();
                 });
 
@@ -268,93 +263,101 @@ const analytics = getAnalytics(app);
                 quantityControls.appendChild(quantityDisplay);
                 quantityControls.appendChild(plusButton);
 
-                const deleteButton = document.createElement('button');
-                deleteButton.textContent = '削除';
-                deleteButton.type = 'button';
-                deleteButton.style.display = isAdmin ? 'inline' : 'none';
-                deleteButton.addEventListener('click', function () {
-                    const menuRef = ref(database, `menus/${id}`);
-                    set(menuRef, null).then(() => {
-                        container.removeChild(menuItem);
-                    }).catch((error) => {
-                        console.error("メニューの削除中にエラーが発生しました: ", error);
+                if (isAdmin) {
+                    const deleteButton = document.createElement('button');
+                    deleteButton.textContent = '削除';
+                    deleteButton.addEventListener('click', function () {
+                        deleteMenu(id);
                     });
-                });
+                    menuItem.appendChild(deleteButton);
+                }
 
                 menuItem.appendChild(menuImageElement);
                 menuItem.appendChild(menuNameElement);
                 menuItem.appendChild(menuPriceElement);
                 menuItem.appendChild(quantityControls);
-                menuItem.appendChild(deleteButton);
-
                 container.appendChild(menuItem);
 
                 function updateSelectedItems() {
-                    let totalQuantity = 0;
+                    quantityDisplay.textContent = selectedItems[id].count;
+                    updateSelectedItemsList();
+                }
+
+                function updateSelectedItemsList() {
+                    selectedItemsContainer.innerHTML = '';
                     let totalPrice = 0;
-                    selectedItemsContainer.innerHTML = '<h3>選択された商品</h3>';
 
                     for (let key in selectedItems) {
-                        if (selectedItems[key].count > 0) {
-                            const item = selectedItems[key];
-                            totalQuantity += item.count;
+                        const item = selectedItems[key];
+                        if (item.count > 0) {
+                            const itemElement = document.createElement('p');
+                            itemElement.textContent = `${item.name}: ¥${item.price} × ${item.count}`;
+                            selectedItemsContainer.appendChild(itemElement);
                             totalPrice += item.count * item.price;
-                            selectedItemsContainer.innerHTML += `<p>${item.name} x${item.count} (¥${item.price * item.count})</p>`;
                         }
                     }
 
-                    selectedItemsContainer.innerHTML += `<hr><p>合計: ${totalQuantity}点 (¥${totalPrice})</p>`;
-                    quantityDisplay.textContent = selectedItems[id]?.count || '0';
+                    const totalPriceElement = document.createElement('p');
+                    totalPriceElement.textContent = `合計: ¥${totalPrice}`;
+                    selectedItemsContainer.appendChild(totalPriceElement);
                 }
+            }
+
+            function deleteMenu(id) {
+                const menuRef = ref(database, 'menus/' + id);
+                set(menuRef, null).then(() => {
+                    alert('メニューが削除されました。');
+                    location.reload();
+                }).catch((error) => {
+                    alert('メニューの削除に失敗しました。');
+                    console.error('メニュー削除エラー:', error);
+                });
             }
         });
     </script>
 </head>
 <body>
-    <h2>メニュー選択</h2>
-
-    <div id="adminLogin">
-        <input type="password" id="adminPassword" placeholder="管理者パスワード">
-        <button id="loginButton">ログイン</button>
-    </div>
-
     <div id="adminSection" style="display: none;">
-        <h3>管理者用メニュー管理</h3>
-        <input type="text" id="menuName" placeholder="商品名">
-        <input type="number" id="menuPrice" placeholder="値段">
+        <h2>管理者メニュー</h2>
+        <h3>メニュー追加</h3>
+        <input type="text" id="menuName" placeholder="メニュー名">
+        <input type="number" id="menuPrice" placeholder="価格">
         <input type="text" id="menuImage" placeholder="画像URL">
         <select id="menuCategory">
             <option value="フード">フード</option>
             <option value="ドリンク">ドリンク</option>
             <option value="その他">その他</option>
         </select>
-        <div>
-            <label><input type="radio" name="menuTax" value="8" checked> 8% 消費税</label>
-            <label><input type="radio" name="menuTax" value="10"> 10% 消費税</label>
-        </div>
+        <label>
+            税込み10%
+            <input type="radio" name="menuTax" value="10" checked>
+        </label>
+        <label>
+            税込み8%
+            <input type="radio" name="menuTax" value="8">
+        </label>
         <button id="addMenuButton">メニューを追加</button>
     </div>
 
-    <div class="menu-category" id="foodCategory">
+    <div id="adminLogin">
+        <input type="password" id="adminPassword" placeholder="管理者パスワード">
+        <button id="loginButton">ログイン</button>
+    </div>
+
+    <div class="menu-category">
         <h2>フード</h2>
         <div id="foodContainer" class="menu-container"></div>
     </div>
-
-    <div class="menu-category" id="drinkCategory">
+    <div class="menu-category">
         <h2>ドリンク</h2>
         <div id="drinkContainer" class="menu-container"></div>
     </div>
-
-    <div class="menu-category" id="otherCategory">
+    <div class="menu-category">
         <h2>その他</h2>
         <div id="otherContainer" class="menu-container"></div>
     </div>
 
-    <div id="selectedItems">
-        <h3>選択された商品</h3>
-        <!-- 選択内容が動的に表示されます -->
-    </div>
-
-    <button id="orderButton">注文を確定</button>
+    <div id="selectedItems"></div>
+    <button id="orderButton">注文確定</button>
 </body>
 </html>
