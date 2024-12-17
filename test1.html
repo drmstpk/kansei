@@ -147,7 +147,6 @@
                 const username = document.getElementById('adminUsername').value;
                 const password = document.getElementById('adminPassword').value;
 
-                // 管理者情報のチェック (例: 'admin'と'password'でログイン)
                 if (username === 'admin' && password === 'password') {
                     alert("ログイン成功！管理者メニューが表示されます。");
                     adminMenuContainer.style.display = 'block';
@@ -318,6 +317,6 @@
     </div>
 
     <!-- 注文ボタン -->
-    <button id="orderButton" class="orderButton">注文する</button>
+    <button id="orderButton">注文を確定する</button>
 </body>
 </html>
