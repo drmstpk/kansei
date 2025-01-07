@@ -7,16 +7,16 @@
     <style>
         /* 管理者パスワード欄を目立たなくする */
         #adminLogin {
-    position: fixed;
-    top: 0px; /* 画面の上端に固定 */
-    right: 10px; /* 画面の右端から10px */
-    font-size: 0.9em;
-    background-color: #f9f9f9;
-    border: 1px solid #ccc;
-    padding: 5px;
-    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
-    z-index: 1000; /* 他の要素の上に表示 */
-}
+            position: fixed;
+            top: 0px;
+            right: 10px;
+            font-size: 0.9em;
+            background-color: #f9f9f9;
+            border: 1px solid #ccc;
+            padding: 5px;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
 
         #selectedItems {
             margin-top: 20px;
@@ -85,27 +85,34 @@
             height: 25px;
         }
 
-       #orderButton {
+        /* 右下のボタンのスタイルを削除 */
+        #orderButton {
             position: fixed;
-            bottom: 0px; /* 画面の下端に固定 */
-            right: 20px; /* 画面の右端から20px */
-            width: 200px; /* ボタンの幅を大きく */
-            height: 80px; /* ボタンの高さを大きく */
-            font-size: 1.5em; /* フォントサイズを大きく */
-            background-color: #ff4500; /* 目立つオレンジ色 */
-            color: #fff; /* 文字色を白に */
+            bottom: 0px;
+            right: 20px;
+            width: 200px;
+            height: 80px;
+            font-size: 1.5em;
+            background-color: #ff4500;
+            color: #fff;
             border: none;
-            border-radius: 10px; /* 角を丸く */
+            border-radius: 10px;
             cursor: pointer;
             box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.2);
-            z-index: 1000; /* 他の要素の上に表示 */
-            transition: background-color 0.3s; /* ホバー時の滑らかな変化 */
+            z-index: 1000;
+            transition: background-color 0.3s;
         }
 
+        #orderButton:hover {
+            background-color: #e03e00;
+        }
 
-    #orderButton:hover {
-    background-color: #e03e00; /* ホバー時に少し暗くする */
-}
+        /* 商品選択の右側に配置されるボタン */
+        .order-button-container {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+        }
     </style>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
@@ -173,67 +180,6 @@
                 }
             });
 
-            document.getElementById('addMenuButton').addEventListener('click', function () {
-                const menuName = document.getElementById('menuName').value;
-                const menuPrice = parseInt(document.getElementById('menuPrice').value, 10);
-                const menuImage = document.getElementById('menuImage').value;
-                const menuCategory = document.getElementById('menuCategory').value;
-                const menuTax = document.querySelector('input[name="menuTax"]:checked').value;
-
-                if (menuName && menuPrice && menuImage && menuCategory) {
-                    const priceWithTax = menuTax === '10' ? Math.round(menuPrice * 1.1) : Math.round(menuPrice * 1.08);
-                    const newMenuRef = push(menusRef);
-                    const menuData = { name: menuName, price: priceWithTax, image: menuImage, category: menuCategory, tax: menuTax };
-
-                    set(newMenuRef, menuData).then(() => {
-                        addMenuToCategory(menuCategory, menuName, priceWithTax, menuImage, newMenuRef.key, menuTax, true);
-                        document.getElementById('menuName').value = '';
-                        document.getElementById('menuPrice').value = '';
-                        document.getElementById('menuImage').value = '';
-                        document.getElementById('menuCategory').value = '';
-                    }).catch((error) => {
-                        console.error("メニューの保存中にエラーが発生しました: ", error);
-                        alert("メニューの保存に失敗しました。もう一度お試しください。");
-                    });
-                } else {
-                    alert("すべての項目を入力してください。");
-                }
-            });
-
-            document.getElementById('orderButton').addEventListener('click', function () {
-                let orderItems = [];
-                let totalPrice = 0;
-
-                for (let key in selectedItems) {
-                    if (selectedItems[key].count > 0) {
-                        const item = selectedItems[key];
-                        orderItems.push({ name: item.name, price: item.price, count: item.count });
-                        totalPrice += item.count * item.price;
-                    }
-                }
-
-                if (orderItems.length > 0) {
-                    const orderData = {
-                        items: orderItems,
-                        total: totalPrice,
-                        date: new Date().toLocaleString()
-                    };
-
-                    const ordersRef = ref(database, 'orders');
-                    push(ordersRef, orderData)
-                        .then(() => {
-                            alert("注文が確定しました！PayPayに移動します。");
-                            window.location.href = `paypay://pay?amount=${totalPrice}`;
-                        })
-                        .catch((error) => {
-                            console.error("注文の保存中にエラーが発生しました: ", error);
-                            alert("注文の保存に失敗しました。もう一度お試しください。");
-                        });
-                } else {
-                    alert("メニューを選択してください。");
-                }
-            });
-
             function addMenuToCategory(category, name, price, image, id, tax, isAdmin) {
                 const container = category === 'フード' ? foodContainer :
                                   category === 'ドリンク' ? drinkContainer : otherContainer;
@@ -294,80 +240,73 @@
                     });
                 });
 
+                // 商品右側にボタンを配置
+                const orderButtonContainer = document.createElement('div');
+                orderButtonContainer.classList.add('order-button-container');
+                const orderButton = document.createElement('button');
+                orderButton.textContent = '注文';
+                orderButton.addEventListener('click', function () {
+                    let orderItems = [];
+                    let totalPrice = 0;
+
+                    for (let key in selectedItems) {
+                        if (selectedItems[key].count > 0) {
+                            orderItems.push(`${selectedItems[key].name}: ¥${selectedItems[key].price} × ${selectedItems[key].count}`);
+                            totalPrice += selectedItems[key].price * selectedItems[key].count;
+                        }
+                    }
+                    alert(`注文内容: \n${orderItems.join('\n')}\n合計: ¥${totalPrice}`);
+                });
+
+                orderButtonContainer.appendChild(orderButton);
+
                 menuItem.appendChild(menuImageElement);
                 menuItem.appendChild(menuNameElement);
                 menuItem.appendChild(menuPriceElement);
                 menuItem.appendChild(quantityControls);
                 menuItem.appendChild(deleteButton);
-
+                menuItem.appendChild(orderButtonContainer);
                 container.appendChild(menuItem);
+            }
 
-                function updateSelectedItems() {
-                    let totalQuantity = 0;
-                    let totalPrice = 0;
-                    selectedItemsContainer.innerHTML = '<h3>選択された商品</h3>';
-
-                    for (let key in selectedItems) {
-                        if (selectedItems[key].count > 0) {
-                            const item = selectedItems[key];
-                            totalQuantity += item.count;
-                            totalPrice += item.count * item.price;
-                            selectedItemsContainer.innerHTML += `<p>${item.name} x${item.count} (¥${item.price * item.count})</p>`;
-                        }
+            function updateSelectedItems() {
+                selectedItemsContainer.innerHTML = '';
+                let totalPrice = 0;
+                for (let key in selectedItems) {
+                    if (selectedItems[key].count > 0) {
+                        const itemElement = document.createElement('p');
+                        itemElement.textContent = `${selectedItems[key].name}: ¥${selectedItems[key].price} × ${selectedItems[key].count}`;
+                        selectedItemsContainer.appendChild(itemElement);
+                        totalPrice += selectedItems[key].price * selectedItems[key].count;
                     }
-
-                    selectedItemsContainer.innerHTML += `<hr><p>合計: ${totalQuantity}点 (¥${totalPrice})</p>`;
-                    quantityDisplay.textContent = selectedItems[id]?.count || '0';
                 }
+                const totalPriceElement = document.createElement('p');
+                totalPriceElement.textContent = `合計: ¥${totalPrice}`;
+                selectedItemsContainer.appendChild(totalPriceElement);
             }
         });
     </script>
 </head>
 <body>
-    <h2>メニュー選択</h2>
-
     <div id="adminLogin">
         <input type="password" id="adminPassword" placeholder="管理者パスワード">
         <button id="loginButton">ログイン</button>
     </div>
-
-    <div id="adminSection" style="display: none;">
-        <h3>管理者用メニュー管理</h3>
-        <input type="text" id="menuName" placeholder="商品名">
-        <input type="number" id="menuPrice" placeholder="値段">
-        <input type="text" id="menuImage" placeholder="画像URL">
-        <select id="menuCategory">
-            <option value="フード">フード</option>
-            <option value="ドリンク">ドリンク</option>
-            <option value="その他">その他</option>
-        </select>
+    <div id="adminSection" style="display:none;">
         <div>
-            <label><input type="radio" name="menuTax" value="8" checked> 8% 消費税</label>
-            <label><input type="radio" name="menuTax" value="10"> 10% 消費税</label>
+            <div id="foodContainer" class="menu-category">
+                <h2>フード</h2>
+            </div>
+            <div id="drinkContainer" class="menu-category">
+                <h2>ドリンク</h2>
+            </div>
+            <div id="otherContainer" class="menu-category">
+                <h2>その他</h2>
+            </div>
         </div>
-        <button id="addMenuButton">メニューを追加</button>
     </div>
-
-    <div class="menu-category" id="foodCategory">
-        <h2>フード</h2>
-        <div id="foodContainer" class="menu-container"></div>
-    </div>
-
-    <div class="menu-category" id="drinkCategory">
-        <h2>ドリンク</h2>
-        <div id="drinkContainer" class="menu-container"></div>
-    </div>
-
-    <div class="menu-category" id="otherCategory">
-        <h2>その他</h2>
-        <div id="otherContainer" class="menu-container"></div>
-    </div>
-
     <div id="selectedItems">
-        <h3>選択された商品</h3>
-        <!-- 選択内容が動的に表示されます -->
+        <h3>選択された商品:</h3>
     </div>
-
-    <button id="orderButton">注文を確定</button>
 </body>
 </html>
