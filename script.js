@@ -213,9 +213,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 
-// 合計金額の初期化
-let totalPrice = 0;
-
 // 合計金額の表示を更新する関数
 function updateTotalPriceDisplay() {
     const totalPriceElement = document.getElementById('totalprice');
