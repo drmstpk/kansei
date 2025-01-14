@@ -123,6 +123,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
+    // メニューをカテゴリーに追加する関数
     function addMenuToCategory(category, name, price, image, id, tax, isAdmin) {
         const container = category === 'フード' ? foodContainer :
                           category === 'ドリンク' ? drinkContainer : otherContainer;
