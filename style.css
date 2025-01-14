@@ -97,3 +97,7 @@
 #orderButton:hover {
     background-color: #e03e00; /* ホバー時に少し暗くする */
 }
+.footer{
+    position: relative;
+    padding-bottom: 100px;
+}
