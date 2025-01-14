@@ -211,7 +211,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const copyButton = document.createElement('button');
             copyButton.textContent = '合計金額をコピー';
             copyButton.addEventListener('click', function () {
-                navigator.clipboard.writeText(`合計金額: ¥${totalPrice}`);
+                navigator.clipboard.writeText(`${totalPrice}`);
                 alert('合計金額をコピーしました！');
             });
 
