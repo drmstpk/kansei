@@ -27,6 +27,7 @@ document.addEventListener('DOMContentLoaded', function () {
     let selectedItems = {};
 
     // ページロード時にメニューを読み込む
+    //テスト
     const menusRef = ref(database, 'menus');
     get(menusRef).then((snapshot) => {
         if (snapshot.exists()) {
