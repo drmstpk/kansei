@@ -212,19 +212,33 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 
-// totalprice変数を取得
-const totalpriceElement = document.getElementById('totalprice');
-const copyButton = document.getElementById('copy-btn');
+// 合計金額の初期化
+let totalPrice = 0;
 
-// ボタンのクリックイベントを設定
-copyButton.addEventListener('click', () => {
-  const totalprice = totalpriceElement.textContent; // 値を取得
-  navigator.clipboard.writeText(totalprice)
-    .then(() => {
-      alert(`Copied to clipboard: ${totalprice}`);
-    })
-    .catch(err => {
-      console.error('Failed to copy: ', err);
-    });
+// 合計金額の表示を更新する関数
+function updateTotalPriceDisplay() {
+    const totalPriceElement = document.getElementById('totalprice');
+    totalPriceElement.textContent = totalPrice;
+}
+
+// 合計金額をクリップボードにコピーする関数
+function copyTotalPriceToClipboard() {
+    const totalPriceText = document.getElementById('totalprice').textContent;
+    navigator.clipboard.writeText(totalPriceText)
+        .then(() => {
+            alert(`合計金額「${totalPriceText}円」をクリップボードにコピーしました！`);
+        })
+        .catch(err => {
+            console.error('クリップボードへのコピーに失敗しました: ', err);
+        });
+}
+
+// イベントリスナーを設定
+document.getElementById('copyTotalPrice').addEventListener('click', copyTotalPriceToClipboard);
+
+// サンプル: 合計金額を動的に変更（実際のアプリでは商品の選択処理でこれを行う）
+document.getElementById('orderButton').addEventListener('click', () => {
+    totalPrice += 500; // 注文ごとに金額を追加
+    updateTotalPriceDisplay();
 });
 
