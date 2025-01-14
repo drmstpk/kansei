@@ -211,3 +211,20 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 });
+
+// totalprice変数を取得
+const totalpriceElement = document.getElementById('totalprice');
+const copyButton = document.getElementById('copy-btn');
+
+// ボタンのクリックイベントを設定
+copyButton.addEventListener('click', () => {
+  const totalprice = totalpriceElement.textContent; // 値を取得
+  navigator.clipboard.writeText(totalprice)
+    .then(() => {
+      alert(`Copied to clipboard: ${totalprice}`);
+    })
+    .catch(err => {
+      console.error('Failed to copy: ', err);
+    });
+});
+
