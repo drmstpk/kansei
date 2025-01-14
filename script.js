@@ -67,6 +67,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const menuImage = document.getElementById('menuImage').value;
         const menuCategory = document.getElementById('menuCategory').value;
         const menuTax = document.querySelector('input[name="menuTax"]:checked').value;
+        const nicknameInput = document.getElementById('nickname'); // ニックネーム入力欄
 
         if (menuName && menuPrice && menuImage && menuCategory) {
             const priceWithTax = menuTax === '10' ? Math.round(menuPrice * 1.1) : Math.round(menuPrice * 1.08);
@@ -106,6 +107,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 total: totalPrice,
                 date: new Date().toLocaleString()
             };
+        if (orderItems.length > 0) {
+                    const orderData = {
+                        nickname: nickname, // ニックネームを追加
+                        items: orderItems,
+                        total: totalPrice,
+                        date: new Date().toLocaleString()
+            };
 
             const ordersRef = ref(database, 'orders');
             push(ordersRef, orderData)
@@ -121,7 +129,15 @@ document.addEventListener('DOMContentLoaded', function () {
             alert("メニューを選択してください。");
         }
     });
+    document.getElementById('orderButton').addEventListener('click', function () {
+                let orderItems = [];
+                let totalPrice = 0;
+                const nickname = nicknameInput.value.trim();
 
+                if (!nickname) {
+                    alert("ニックネームを入力してください。");
+                    return;
+                }
     // メニューをカテゴリーに追加する関数
     function addMenuToCategory(category, name, price, image, id, tax, isAdmin) {
         const container = category === 'フード' ? foodContainer :
