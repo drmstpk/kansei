@@ -101,3 +101,12 @@
     position: relative;
     padding-bottom: 100px;
 }
+
+#nickname {
+    width: 100%;
+    padding: 10px;
+    font-size: 1.2em;
+    margin-bottom: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
