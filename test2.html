@@ -120,9 +120,9 @@
         });
 
         // Firebaseから注文データを取得する関数
-        const fetchOrders = async () => {
-            const ordersRef = ref(database, "orders");
+        const fetchOrders = () => {
             return new Promise((resolve) => {
+                const ordersRef = ref(database, "orders");
                 onValue(ordersRef, (snapshot) => {
                     resolve(snapshot.val());
                 });
