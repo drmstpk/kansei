@@ -11,6 +11,7 @@ const firebaseConfig = {
     appId: "1:624514936023:web:cbbd8f7a89450b86e8d492",
     measurementId: "G-5H39DWSK3Y"
 };
+
 const app = initializeApp(firebaseConfig);
 const database = getDatabase(app);
 
@@ -22,9 +23,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const passwordInput = document.getElementById('adminPassword');
     const loginButton = document.getElementById('loginButton');
     const selectedItemsContainer = document.getElementById('selectedItems');
+    const nicknameInput = document.getElementById('nickname'); // ニックネーム入力欄
 
     let selectedItems = {};
 
+    // ページロード時にメニューを読み込む
     const menusRef = ref(database, 'menus');
     get(menusRef).then((snapshot) => {
         if (snapshot.exists()) {
@@ -67,7 +70,6 @@ document.addEventListener('DOMContentLoaded', function () {
         const menuImage = document.getElementById('menuImage').value;
         const menuCategory = document.getElementById('menuCategory').value;
         const menuTax = document.querySelector('input[name="menuTax"]:checked').value;
-        const nicknameInput = document.getElementById('nickname'); // ニックネーム入力欄
 
         if (menuName && menuPrice && menuImage && menuCategory) {
             const priceWithTax = menuTax === '10' ? Math.round(menuPrice * 1.1) : Math.round(menuPrice * 1.08);
@@ -92,6 +94,12 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('orderButton').addEventListener('click', function () {
         let orderItems = [];
         let totalPrice = 0;
+        const nickname = nicknameInput.value.trim();
+
+        if (!nickname) {
+            alert("ニックネームを入力してください。");
+            return;
+        }
 
         for (let key in selectedItems) {
             if (selectedItems[key].count > 0) {
@@ -103,16 +111,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (orderItems.length > 0) {
             const orderData = {
+                nickname: nickname, // ニックネームを追加
                 items: orderItems,
                 total: totalPrice,
                 date: new Date().toLocaleString()
-            };
-        if (orderItems.length > 0) {
-                    const orderData = {
-                        nickname: nickname, // ニックネームを追加
-                        items: orderItems,
-                        total: totalPrice,
-                        date: new Date().toLocaleString()
             };
 
             const ordersRef = ref(database, 'orders');
@@ -129,19 +131,10 @@ document.addEventListener('DOMContentLoaded', function () {
             alert("メニューを選択してください。");
         }
     });
-    document.getElementById('orderButton').addEventListener('click', function () {
-                let orderItems = [];
-                let totalPrice = 0;
-                const nickname = nicknameInput.value.trim();
 
-                if (!nickname) {
-                    alert("ニックネームを入力してください。");
-                    return;
-                }
-    // メニューをカテゴリーに追加する関数
     function addMenuToCategory(category, name, price, image, id, tax, isAdmin) {
         const container = category === 'フード' ? foodContainer :
-                          category === 'ドリンク' ? drinkContainer : otherContainer;
+                            category === 'ドリンク' ? drinkContainer : otherContainer;
         const menuItem = document.createElement('div');
         menuItem.classList.add('menu-item');
 
@@ -154,7 +147,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const menuPriceElement = document.createElement('p');
         menuPriceElement.classList.add('price');
-        menuPriceElement.textContent = `¥${price} (税込)`;
+        menuPriceElement.textContent = `\u00a5${price} (税込)`;
 
         const quantityControls = document.createElement('div');
         quantityControls.classList.add('quantity-controls');
@@ -217,11 +210,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     const item = selectedItems[key];
                     totalQuantity += item.count;
                     totalPrice += item.count * item.price;
-                    selectedItemsContainer.innerHTML += `<p>${item.name} x${item.count} (¥${item.price * item.count})</p>`;
+                    selectedItemsContainer.innerHTML += `<p>${item.name} x${item.count} (\u00a5${item.price * item.count})</p>`;
                 }
             }
-
-            selectedItemsContainer.innerHTML += `<hr><p>合計: ${totalQuantity}点 (¥${totalPrice})</p>`;
 
             // コピー用ボタンの追加
             const copyButton = document.createElement('button');
@@ -231,6 +222,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 alert('合計金額をコピーしました！');
             });
 
+            selectedItemsContainer.innerHTML += `<hr><p>合計: ${totalQuantity}点 (\u00a5${totalPrice})</p>`;
             selectedItemsContainer.appendChild(copyButton);
             quantityDisplay.textContent = selectedItems[id]?.count || '0';
         }
