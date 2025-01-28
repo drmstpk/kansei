@@ -50,7 +50,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
         import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
-        import { parse } from 'https://cdn.jsdelivr.net/npm/json2csv@5.0.0/dist/json2csv.min.js';
+        import { parse } from 'https://cdn.jsdelivr.net/npm/json2csv@5.0.5/dist/json2csv.min.js'; // json2csvのインポート
 
         const firebaseConfig = {
             apiKey: "AIzaSyBhC42q3yJq8kIXTKkl67nSiVX_Wn8_NK8",
@@ -70,7 +70,7 @@
             const ordersContainer = document.getElementById("orders-container");
             const ordersRef = ref(database, "orders");
 
-            // 注文データの取得と表示
+            // データの取得とリアルタイム更新
             onValue(ordersRef, (snapshot) => {
                 const orders = snapshot.val();
                 ordersContainer.innerHTML = ""; // 表示をリセット
@@ -109,60 +109,52 @@
                 }
             });
 
-            // 売上データのCSV出力機能
+            // CSV出力ボタンの処理
             const csvButton = document.getElementById("csvoutput");
-
             csvButton.addEventListener("click", async () => {
                 const ordersSnapshot = await fetchOrders();
                 const categorizedData = categorizeOrders(ordersSnapshot);
-                generateCSV(categorizedData);
-            });
-        });
 
-        // Firebaseから注文データを取得する関数
-        const fetchOrders = () => {
-            return new Promise((resolve) => {
-                const ordersRef = ref(database, "orders");
-                onValue(ordersRef, (snapshot) => {
-                    resolve(snapshot.val());
+                // カテゴリーごとにCSVを出力
+                Object.keys(categorizedData).forEach(category => {
+                    const csv = parse(categorizedData[category]);
+                    const blob = new Blob([csv], { type: 'text/csv' });
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = `${category}_sales_data.csv`;
+                    link.click();
                 });
             });
-        };
 
-        // 注文データをカテゴリーごとに分類
-        const categorizeOrders = (orders) => {
-            const categorizedData = {};
+            // Firebaseから注文データを取得する関数
+            async function fetchOrders() {
+                const snapshot = await new Promise((resolve, reject) => {
+                    onValue(ordersRef, (snapshot) => {
+                        resolve(snapshot.val());
+                    }, reject);
+                });
+                return snapshot;
+            }
 
-            Object.values(orders).forEach(order => {
-                order.items.forEach(item => {
-                    const category = item.category || "未分類"; // 商品のカテゴリー
-                    if (!categorizedData[category]) {
-                        categorizedData[category] = [];
-                    }
-                    categorizedData[category].push({
-                        nickname: order.nickname,
-                        date: order.date,
-                        item: item.name,
-                        quantity: item.count,
-                        total: item.price * item.count
+            // 注文データをカテゴリーごとに分類する関数
+            function categorizeOrders(orders) {
+                const categorizedData = {};
+                Object.values(orders).forEach(order => {
+                    order.items.forEach(item => {
+                        const category = item.category || "未分類"; // カテゴリがなければ「未分類」にする
+                        if (!categorizedData[category]) categorizedData[category] = [];
+                        categorizedData[category].push({
+                            nickname: order.nickname,
+                            item_name: item.name,
+                            quantity: item.count,
+                            price: item.price,
+                            total: item.price * item.count
+                        });
                     });
                 });
-            });
-
-            return categorizedData;
-        };
-
-        // CSVファイルを生成
-        const generateCSV = (categorizedData) => {
-            Object.keys(categorizedData).forEach(category => {
-                const csv = parse(categorizedData[category]);
-                const blob = new Blob([csv], { type: 'text/csv' });
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(blob);
-                link.download = `${category}_sales_data.csv`;
-                link.click();
-            });
-        };
+                return categorizedData;
+            }
+        });
     </script>
 </head>
 <body>
