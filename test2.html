@@ -112,7 +112,7 @@
     </style>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-        import { getDatabase, ref, onValue, remove } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBi4R5J3DfW8xBXbM9cjSmQ_Ycwlzr76W4",
@@ -141,19 +141,6 @@
                     summaryHTML += `${itemName}: ${data.count}個 (¥${data.total})<br>`;
                 });
                 return summaryHTML;
-            };
-
-            const removeOrderFromSummary = (summary, items) => {
-                items.forEach(({ name, count, price }) => {
-                    if (summary[name]) {
-                        summary[name].count -= count;
-                        summary[name].total -= count * price;
-
-                        if (summary[name].count <= 0) {
-                            delete summary[name];
-                        }
-                    }
-                });
             };
 
             onValue(ordersRef, (snapshot) => {
@@ -276,7 +263,7 @@
             const exportToCSV = () => {
                 let csvContent = "注文ID,ニックネーム,注文日時,商品名,数量,価格,合計金額\n";
 
-                Object.entries(ordersContainer.childNodes).forEach(([month, data]) => {
+                Object.entries(monthlySummary).forEach(([month, data]) => {
                     data.orders.forEach(order => {
                         order.items.forEach(item => {
                             csvContent += `${order.id},${order.nickname},${order.date},${item.name},${item.count},${item.price},${item.price * item.count}\n`;
