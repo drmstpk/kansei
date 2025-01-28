@@ -31,6 +31,12 @@
             color: #333;
         }
 
+        .total-monthly {
+            font-size: 1.2em;
+            color: #ff4500;
+            margin-top: 10px;
+        }
+
         .day-container {
             margin-bottom: 20px;
             padding: 10px;
@@ -87,26 +93,10 @@
         .delete-button:hover {
             background-color: #e60000;
         }
-
-        /* CSV出力ボタン */
-        .export-button {
-            margin: 20px 0;
-            padding: 10px 20px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        .export-button:hover {
-            background-color: #45a049;
-        }
     </style>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
         import { getDatabase, ref, onValue, remove } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
-        import { parse } from 'https://cdn.jsdelivr.net/npm/json2csv@5.0.6/dist/json2csv.umd.js'; // json2csv
 
         const firebaseConfig = {
             apiKey: "AIzaSyBi4R5J3DfW8xBXbM9cjSmQ_Ycwlzr76W4",
@@ -126,64 +116,39 @@
             const ordersContainer = document.getElementById("orders-container");
             const ordersRef = ref(database, "orders");
 
+            // 月と日付ごとの商品集計データを管理
             let monthlySummary = {};
-            let categorizedItems = {};  // カテゴリーごとの売り上げ集計
+            let dailySummary = {};
 
-            const updateSummary = (monthKey) => {
-                if (!monthlySummary[monthKey]) return "";
-
-                let summaryHTML = "<strong>今月の集計:</strong><br>";
-                Object.entries(monthlySummary[monthKey]).forEach(([itemName, data]) => {
+            const updateSummary = (summary, totalKey) => {
+                let summaryHTML = `<strong>${totalKey}:</strong><br>`;
+                Object.entries(summary).forEach(([itemName, data]) => {
                     summaryHTML += `${itemName}: ${data.count}個 (¥${data.total})<br>`;
                 });
-
                 return summaryHTML;
             };
 
-            const removeOrderFromSummary = (monthKey, items) => {
+            const removeOrderFromSummary = (summary, items) => {
                 items.forEach(({ name, count, price }) => {
-                    if (monthlySummary[monthKey] && monthlySummary[monthKey][name]) {
-                        monthlySummary[monthKey][name].count -= count;
-                        monthlySummary[monthKey][name].total -= count * price;
+                    if (summary[name]) {
+                        summary[name].count -= count;
+                        summary[name].total -= count * price;
 
-                        if (monthlySummary[monthKey][name].count <= 0) {
-                            delete monthlySummary[monthKey][name];
+                        if (summary[name].count <= 0) {
+                            delete summary[name];
                         }
                     }
                 });
             };
 
-            const generateCSV = () => {
-                let csvData = [];
-
-                // カテゴリーごとの売り上げ集計をCSV形式に変換
-                Object.entries(categorizedItems).forEach(([category, items]) => {
-                    items.forEach((item) => {
-                        csvData.push({
-                            カテゴリー: category,
-                            商品名: item.name,
-                            数量: item.count,
-                            単価: item.price,
-                            合計: item.count * item.price
-                        });
-                    });
-                });
-
-                const csv = parse(csvData);
-                const blob = new Blob([csv], { type: 'text/csv' });
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(blob);
-                link.download = `売上データ.csv`;
-                link.click();
-            };
-
             onValue(ordersRef, (snapshot) => {
                 const orders = snapshot.val();
-                ordersContainer.innerHTML = "";
-                monthlySummary = {};
-                categorizedItems = {}; // カテゴリー集計をリセット
+                ordersContainer.innerHTML = ""; // 表示をリセット
+                monthlySummary = {}; // 月ごとの集計リセット
+                dailySummary = {}; // 日ごとの集計リセット
 
                 if (orders) {
+                    // 注文データを月と日付ごとに分類
                     const monthlyOrders = {};
                     Object.entries(orders).forEach(([id, order]) => {
                         const orderDate = new Date(order.date);
@@ -191,13 +156,17 @@
                         const dayKey = `${orderDate.getFullYear()}年${orderDate.getMonth() + 1}月${orderDate.getDate()}日`;
 
                         if (!monthlyOrders[monthKey]) {
-                            monthlyOrders[monthKey] = {};
+                            monthlyOrders[monthKey] = { orders: [], days: {}, total: 0 };
                         }
-                        if (!monthlyOrders[monthKey][dayKey]) {
-                            monthlyOrders[monthKey][dayKey] = [];
+                        if (!monthlyOrders[monthKey].days[dayKey]) {
+                            monthlyOrders[monthKey].days[dayKey] = [];
                         }
-                        monthlyOrders[monthKey][dayKey].push({ id, ...order });
 
+                        monthlyOrders[monthKey].orders.push({ id, ...order });
+                        monthlyOrders[monthKey].days[dayKey].push({ id, ...order });
+                        monthlyOrders[monthKey].total += order.total;
+
+                        // 商品ごとの集計を更新（月ごと）
                         if (!monthlySummary[monthKey]) {
                             monthlySummary[monthKey] = {};
                         }
@@ -207,22 +176,23 @@
                             }
                             monthlySummary[monthKey][item.name].count += item.count;
                             monthlySummary[monthKey][item.name].total += item.count * item.price;
+                        });
 
-                            // カテゴリーごとに集計
-                            const category = item.category || '未分類';
-                            if (!categorizedItems[category]) {
-                                categorizedItems[category] = [];
+                        // 商品ごとの集計を更新（日ごと）
+                        if (!dailySummary[dayKey]) {
+                            dailySummary[dayKey] = {};
+                        }
+                        order.items.forEach((item) => {
+                            if (!dailySummary[dayKey][item.name]) {
+                                dailySummary[dayKey][item.name] = { count: 0, total: 0 };
                             }
-                            const existingItem = categorizedItems[category].find(i => i.name === item.name);
-                            if (existingItem) {
-                                existingItem.count += item.count;
-                            } else {
-                                categorizedItems[category].push({ ...item });
-                            }
+                            dailySummary[dayKey][item.name].count += item.count;
+                            dailySummary[dayKey][item.name].total += item.count * item.price;
                         });
                     });
 
-                    Object.entries(monthlyOrders).forEach(([month, days]) => {
+                    // 月ごとに表示
+                    Object.entries(monthlyOrders).forEach(([month, data]) => {
                         const monthDiv = document.createElement("div");
                         monthDiv.classList.add("month-container");
 
@@ -231,7 +201,14 @@
                         monthHeader.textContent = month;
                         monthDiv.appendChild(monthHeader);
 
-                        Object.entries(days).forEach(([day, orders]) => {
+                        // 月の総合計金額を表示
+                        const monthlyTotalDiv = document.createElement("div");
+                        monthlyTotalDiv.classList.add("total-monthly");
+                        monthlyTotalDiv.textContent = `総合計金額: ¥${data.total}`;
+                        monthDiv.appendChild(monthlyTotalDiv);
+
+                        // 日付ごとに表示
+                        Object.entries(data.days).forEach(([day, orders]) => {
                             const dayDiv = document.createElement("div");
                             dayDiv.classList.add("day-container");
 
@@ -240,6 +217,7 @@
                             dayHeader.textContent = day;
                             dayDiv.appendChild(dayHeader);
 
+                            // 注文ごとの表示
                             orders.forEach((order) => {
                                 const orderDiv = document.createElement("div");
                                 orderDiv.classList.add("order");
@@ -260,34 +238,25 @@
 
                                 const totalDiv = document.createElement("div");
                                 totalDiv.classList.add("total");
-                                totalDiv.textContent = `合計金額: \u00a5${order.total}`;
+                                totalDiv.textContent = `合計金額: ¥${order.total}`;
                                 orderDiv.appendChild(totalDiv);
-
-                                const deleteButton = document.createElement("button");
-                                deleteButton.textContent = "削除";
-                                deleteButton.classList.add("delete-button");
-                                deleteButton.addEventListener("click", () => {
-                                    if (confirm("この注文を削除しますか？")) {
-                                        const orderRef = ref(database, `orders/${order.id}`);
-                                        removeOrderFromSummary(month, order.items);
-                                        remove(orderRef).then(() => {
-                                            alert("注文を削除しました。");
-                                        }).catch((error) => {
-                                            console.error("削除エラー: ", error);
-                                        });
-                                    }
-                                });
-                                orderDiv.appendChild(deleteButton);
 
                                 dayDiv.appendChild(orderDiv);
                             });
 
+                            // 今日の集計を表示
+                            const todaySummaryDiv = document.createElement("div");
+                            todaySummaryDiv.classList.add("summary");
+                            todaySummaryDiv.innerHTML = updateSummary(dailySummary[day], "今日の集計");
+                            dayDiv.appendChild(todaySummaryDiv);
+
                             monthDiv.appendChild(dayDiv);
                         });
 
+                        // 月ごとの集計を表示
                         const summaryDiv = document.createElement("div");
                         summaryDiv.classList.add("summary");
-                        summaryDiv.innerHTML = updateSummary(month);
+                        summaryDiv.innerHTML = updateSummary(monthlySummary[month], "今月の集計");
                         monthDiv.appendChild(summaryDiv);
 
                         ordersContainer.appendChild(monthDiv);
@@ -296,18 +265,13 @@
                     ordersContainer.textContent = "現在、注文はありません。";
                 }
             });
-
-            // CSV出力ボタンを追加
-            const exportButton = document.createElement("button");
-            exportButton.textContent = "CSVを出力";
-            exportButton.classList.add("export-button");
-            exportButton.addEventListener("click", generateCSV);
-            document.body.appendChild(exportButton);
         });
     </script>
 </head>
 <body>
     <h1>注文内容一覧</h1>
-    <div id="orders-container"></div>
+    <div id="orders-container">
+        <!-- 注文内容がここに表示されます -->
+    </div>
 </body>
 </html>
