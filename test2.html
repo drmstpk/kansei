@@ -276,8 +276,10 @@
                 const link = document.createElement("a");
                 link.href = URL.createObjectURL(blob);
                 link.download = "orders_data.csv";
-                document.body.appendChild(link);  // 必要な場合リンクをDOMに追加
-                link.click();                    // リンクをクリックしてダウンロード
+
+                // リンクをDOMに追加してクリック
+                document.body.appendChild(link);
+                link.click();
                 document.body.removeChild(link); // ダウンロード後にリンクを削除
             };
 
