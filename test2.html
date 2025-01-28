@@ -309,6 +309,12 @@
 
                         ordersContainer.appendChild(monthDiv);
                     });
+
+                    const csvButton = document.createElement("button");
+                    csvButton.textContent = "CSV ダウンロード";
+                    csvButton.classList.add("csv-button");
+                    csvButton.addEventListener("click", downloadCSV);
+                    ordersContainer.appendChild(csvButton);  // csvButtonをorders-containerに追加
                 } else {
                     ordersContainer.textContent = "現在、注文はありません。";
                 }
@@ -335,12 +341,6 @@
                 link.download = "注文内容.csv";
                 link.click();
             };
-
-            const csvButton = document.createElement("button");
-            csvButton.textContent = "CSV ダウンロード";
-            csvButton.classList.add("csv-button");
-            csvButton.addEventListener("click", downloadCSV);
-            document.body.appendChild(csvButton);
         });
     </script>
 </head>
